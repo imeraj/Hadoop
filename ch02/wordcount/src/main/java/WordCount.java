@@ -9,6 +9,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 public class WordCount extends Configured implements Tool {
+
     public static void main(String[] args) throws Exception {
         int res = ToolRunner.run(new WordCount(), args);
         System.exit(res);
@@ -16,6 +17,14 @@ public class WordCount extends Configured implements Tool {
 
     public int run(String[] args) throws Exception {
         Job job = Job.getInstance(getConf(), "wordcount");
+
+        for (int i = 0; i < args.length; i++) {
+            if ("-skip".equals(args[i])) {
+                job.getConfiguration().setBoolean("wordcount.skip.patterns", true);
+                break;
+            }
+        }
+
         job.setJarByClass(this.getClass());
         job.setJobName("Max temperature");
 
