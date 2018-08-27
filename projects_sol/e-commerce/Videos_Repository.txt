@@ -1,0 +1,17 @@
+1) Project requirement - 
+
+https://www.youtube.com/watch?v=ishBF1Xu8g8
+
+2) Table creation and data ingestion - 
+
+https://www.youtube.com/watch?v=P2I2S5xlmtI
+
+3) Rules checking and validation - 
+
+https://www.youtube.com/watch?v=7nYjJoc9FQ0&t=2s
+
+4) Data Analysis - 
+
+https://www.youtube.com/watch?v=jyOg2WkLDPA&t=7s
+
+

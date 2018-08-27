@@ -1,0 +1,19 @@
+1) Project requirement - 
+
+https://www.youtube.com/watch?v=8ewDcIeVPn8
+
+2) Data creation - 
+
+https://www.youtube.com/watch?v=cAo5o4jXGwQ
+
+3) Lookup table and Intital validation -
+
+https://www.youtube.com/watch?v=EuyOa1uOr2s
+
+4) Data filtering and validaiton -
+
+https://www.youtube.com/watch?v=re-9GHzYzDk
+
+5) Data Analysis - 
+
+https://www.youtube.com/watch?v=woHxDVWoUkE

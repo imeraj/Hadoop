@@ -1,0 +1,301 @@
+************************************************************************
+			DATA INSERTION
+************************************************************************
+LOAD DATA LOCAL INPATH '/home/acadgild/hive/data/merged_data/product_info_merge.json'
+INTO TABLE products_info_raw;
+
+LOAD DATA LOCAL INPATH '/home/acadgild/hive/data/merged_data/user_info_merge.json'
+INTO TABLE users_info_raw;
+
+LOAD DATA LOCAL INPATH '/home/acadgild/hive/data/merged_data/user_activity_merge.json'
+INTO TABLE user_activity_raw;
+
+
+INSERT OVERWRITE TABLE products_info_stg PARTITION (rptg_dt)
+
+SELECT
+
+id,
+
+name,
+
+reseller,
+
+category,
+
+price,
+
+discount,
+
+profit_percent,
+
+from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd') as rptg_dt
+
+FROM products_info_raw;
+
+INSERT OVERWRITE TABLE users_info_stg
+
+PARTITION (rptg_dt)
+
+SELECT
+
+id,
+
+name,
+
+location,
+
+age,
+
+category,
+
+from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd') as rptg_dt
+
+FROM users_info_raw;
+
+
+
+
+
+
+
+INSERT OVERWRITE TABLE user_activity_stg
+
+PARTITION (rptg_dt)
+
+SELECT
+
+product_id,
+user_id,
+cancellation,
+return,
+cancellation_reason,
+return_reason,
+order_date,
+shipment_date,
+delivery_date,
+cancellation_date,
+return_date,
+from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd') as rptg_dt
+
+
+FROM user_activity_raw;
+
+
+
+
+
+=================================================================================================================
+FROM products_info_stg p
+
+LEFT OUTER JOIN prod_details l ON 
+p.product_id=l.prod_id AND p.rptg_dt=from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd')
+
+
+
+INSERT OVERWRITE TABLE products_info_excp
+
+PARTITION (rptg_dt)
+
+SELECT
+
+p.product_id,
+
+p.product_name,
+
+p.reseller,
+
+p.category,
+
+p.price,
+
+p.discount,
+
+p.profit_percent,
+
+CASE WHEN p.product_id IS NULL THEN 'R1'
+
+     WHEN p.discount >= p.price THEN 'R2'
+
+END AS rule_failed,
+
+p.rptg_dt
+
+WHERE (p.product_id IS NULL) OR (p.discount >= p.price)
+
+
+
+INSERT OVERWRITE TABLE products_info_core
+
+PARTITION (rptg_dt)
+
+SELECT
+
+p.product_id,
+
+p.product_name,
+
+p.reseller,
+
+CASE WHEN p.category IS NULL THEN l.category
+
+     ELSE p.category
+
+END AS category,
+
+p.price,
+
+p.discount,
+
+p.profit_percent,
+
+p.rptg_dt
+
+WHERE (p.product_id IS NOT NULL) AND (p.discount <= p.price);
+
+
+===============================================================================
+
+FROM users_info_stg p
+
+LEFT OUTER JOIN user_location l 
+ON 
+p.user_id=l.user_id AND p.rptg_dt=from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd')
+
+
+
+INSERT OVERWRITE TABLE users_info_excp
+
+PARTITION (rptg_dt)
+
+SELECT
+
+p.user_id,
+
+p.name,
+
+p.location,
+
+p.age,
+
+p.occupation,
+
+CASE WHEN p.user_id IS NULL THEN 'R1'
+     WHEN p.age <= 0 THEN 'R3'
+END AS rule_failed,
+
+p.rptg_dt
+
+
+WHERE (p.user_id IS NULL) OR (p.age < 1)
+
+
+
+INSERT OVERWRITE TABLE users_info_core
+
+PARTITION (rptg_dt)
+
+SELECT
+
+p.user_id,
+
+p.name,
+
+CASE WHEN (p.location.city IS NULL) AND (p.location.state IS NULL) THEN named_struct('city',l.city,'state',l.state)
+
+     WHEN (p.location.city IS NULL) AND (p.location.state IS NOT NULL) THEN named_struct('city',l.city,'state',p.location.state)
+
+     WHEN (p.location.city IS NOT NULL) AND (p.location.state IS NULL) THEN named_struct('city',p.location.city,'state',l.state)
+
+ELSE p.location
+
+END AS location,
+
+p.age,
+
+p.occupation,
+
+
+p.rptg_dt
+
+WHERE (p.user_id IS NOT NULL) AND (p.age >= 1);
+
+
+
+
+
+
+
+
+
+
+
+
+x===============================================================================
+
+FROM user_activity_stg p
+
+LEFT OUTER JOIN user_location l 
+ON 
+p.user_id=l.user_id AND p.rptg_dt=from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd')
+LEFT OUTER JOIN product_details pd ON p.prodduct_id=pd.id
+
+
+INSERT OVERWRITE TABLE user_activity_excp
+
+PARTITION (rptg_dt)
+
+SELECT
+
+p.product_id,
+p.user_id,
+p.cancellation,
+p.return,
+p.cancellation_reason,
+p.return_reason,
+p.order_date,
+p.shipment_date,
+p.delivery_date,
+p.cancellation_date,
+p.return_date,
+CASE WHEN (p.product_id IS NULL) OR (p.user_id IS NULL) THEN 'R1'
+     WHEN (p.order_date > p.shipment_date) THEN 'R3'
+     ELSE 'NA'
+END AS rule_failed
+
+WHERE (p.user_id IS NULL) OR (p.product_id IS NULL) OR (p.order_date > p.shipment_date)
+
+
+
+INSERT OVERWRITE TABLE user_activity_core
+
+PARTITION (rptg_dt)
+
+SELECT
+
+p.product_id,
+p.user_id,
+p.cancellation,
+p.return,
+p.cancellation_reason,
+p.return_reason,
+p.order_date,
+p.shipment_date,
+p.delivery_date,
+p.cancellation_date,
+p.return_date,
+
+
+p.rptg_dt
+
+WHERE (p.user_id IS NOT NULL) AND (p.product_id IS NOT NULL) AND (p.order_date <= p.shipment_date);
+
+
+
+
+
+
+
+
+
+=======================================================================================================================

@@ -1,0 +1,108 @@
+use ecommerce;
+add jar /home/acadgild/hive/hive-hcatalog-core-0.14.0.jar;
+set hive.exec.dynamic.partition.mode=nonstrict;
+
+CREATE EXTERNAL TABLE user_location(
+  
+id string, 
+  
+user_id string, 
+ 
+city string, 
+  
+state string
+)
+
+ROW FORMAT SERDE 
+'org.apache.hadoop.hive.hbase.HBaseSerDe' 
+
+STORED BY 
+'org.apache.hadoop.hive.hbase.HBaseStorageHandler' 
+
+WITH SERDEPROPERTIES (
+'hbase.columns.mapping'=':key,
+user_details:id,
+user_details:city,
+user_details:state',
+'serialization.format'='1'
+)
+
+TBLPROPERTIES (
+'hbase.table.name'='user_location'
+);
+
+
+
+CREATE TABLE users_info_raw(
+
+id string,
+name string,
+location struct<city:string,state:string>,
+age bigint,
+category string
+)
+
+ROW FORMAT SERDE
+'org.apache.hive.hcatalog.data.JsonSerDe' 
+
+STORED AS INPUTFORMAT
+'org.apache.hadoop.mapred.TextInputFormat' 
+
+OUTPUTFORMAT
+'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat';
+
+CREATE TABLE users_info_stg(
+
+user_id string,
+name string,
+location struct<city:string,state:string>,
+age bigint,
+occupation string
+)
+
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+CLUSTERED BY (
+user_id)
+INTO 8 BUCKETS
+STORED AS ORC;
+
+CREATE TABLE users_info_excp(
+
+user_id string,
+name string,
+location struct<city:string,state:string>,
+age bigint,
+occupation string,
+rule_failed STRING
+)
+
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+CLUSTERED BY (
+user_id)
+INTO 8 BUCKETS
+STORED AS ORC;
+
+
+CREATE TABLE users_info_core(
+
+user_id string,
+name string,
+location struct<city:string,state:string>,
+age bigint,
+occupation string
+)
+
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+CLUSTERED BY (
+user_id)
+INTO 8 BUCKETS
+STORED AS ORC;

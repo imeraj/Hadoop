@@ -1,0 +1,108 @@
+import os
+
+import sys
+
+import glob
+
+import shutil
+
+x=glob.glob('/home/acadgild/hive/data/data_set/product_info*')
+
+
+merge=open('/home/acadgild/hive/data/merged_product_data/product_info_merge.json','w')
+
+for f in x:
+
+    if( os.stat(f).st_size <=3000):
+
+      z=open(f,'r')
+
+      for s in z:
+
+        merge.write(s)
+
+      z.close()
+
+    else:
+
+      shutil.move(f,'/home/acadgild/hive/data/merged_product_data/')
+
+merge.close()
+
+
+
+
+
+
+import os
+
+import sys
+
+import glob
+
+import shutil
+
+x=glob.glob('/home/acadgild/hive/data/data_set/user_info*')
+
+
+merge=open('/home/acadgild/hive/data/merged_user_data/user_info_merge.json','w')
+
+for f in x:
+
+    if( os.stat(f).st_size <=3000):
+
+      z=open(f,'r')
+
+      for s in z:
+
+        merge.write(s)
+
+      z.close()
+
+    else:
+
+      shutil.move(f,'/home/acadgild/hive/data/merged_user_data/')
+
+merge.close()
+
+
+
+
+
+
+
+
+
+
+import os
+
+import sys
+
+import glob
+
+import shutil
+
+x=glob.glob('/home/acadgild/hive/data/data_set/user_activity*')
+
+
+merge=open('/home/acadgild/hive/data/merged_activity_data/user_activity_merge.json','w')
+
+for f in x:
+
+    if( os.stat(f).st_size <=3000 and len(x)>1):
+
+      z=open(f,'r')
+
+      for s in z:
+
+        merge.write(s)
+
+      z.close()
+
+    else:
+
+      shutil.move(f,'/home/acadgild/hive/data/merged_activity_data/')
+
+merge.close()
+
+

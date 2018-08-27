@@ -1,0 +1,113 @@
+use ecommerce;
+add jar /home/acadgild/hive/hive-hcatalog-core-0.14.0.jar;
+set hive.exec.dynamic.partition.mode=nonstrict;
+
+
+
+
+CREATE TABLE user_activity_raw
+(
+product_id string,
+user_id string,
+cancellation string,
+return string,
+cancellation_reason string,
+return_reason string,
+order_date string,
+shipment_date string,
+delivery_date string,
+cancellation_date string,
+return_date string
+)
+
+ROW FORMAT SERDE 
+'org.apache.hive.hcatalog.data.JsonSerDe' 
+
+STORED AS INPUTFORMAT 
+'org.apache.hadoop.mapred.TextInputFormat' 
+
+OUTPUTFORMAT
+'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat';
+
+
+
+
+
+CREATE TABLE user_activity_stg
+(
+product_id string,
+user_id string,
+cancellation string,
+return string,
+cancellation_reason string,
+return_reason string,
+order_date string,
+shipment_date string,
+delivery_date string,
+cancellation_date string,
+return_date string
+)
+
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+CLUSTERED BY (
+product_id,
+user_id)
+INTO 8 BUCKETS
+STORED AS ORC;
+
+
+CREATE TABLE user_activity_excp
+(
+product_id string,
+user_id string,
+cancellation string,
+return string,
+cancellation_reason string,
+return_reason string,
+order_date string,
+shipment_date string,
+delivery_date string,
+cancellation_date string,
+return_date string,
+rule_failed STRING 
+)
+
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+CLUSTERED BY (
+product_id,
+user_id)
+INTO 8 BUCKETS
+STORED AS ORC;
+
+
+
+CREATE TABLE user_activity_core
+(
+product_id string,
+user_id string,
+cancellation string,
+return string,
+cancellation_reason string,
+return_reason string,
+order_date string,
+shipment_date string,
+delivery_date string,
+cancellation_date string,
+return_date string
+)
+
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+CLUSTERED BY (
+product_id,
+user_id)
+INTO 8 BUCKETS
+STORED AS ORC;

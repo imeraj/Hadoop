@@ -1,0 +1,47 @@
+hive -e "SELECT COUNT(*) FROM user_activity_excp WHERE rule_failed = 'R1'" > user_activity_excp_r1.txt
+hive -e "SELECT COUNT(*) FROM user_activity_excp WHERE rule_failed = 'R2'" > user_activity_excp_r2.txt
+hive -e "SELECT COUNT(*) FROM user_activity_excp WHERE rule_failed = 'R3'" > user_activity_excp_r3.txt
+
+hive -e "SELECT COUNT(*) FROM user_activity_core " > user_activity_core.txt
+
+hive -e "SELECT COUNT(*) FROM users_info_excp WHERE rule_failed = 'R1'" > users_info_excp_r1.txt
+hive -e "SELECT COUNT(*) FROM users_info_excp WHERE rule_failed = 'R2'" > users_info_excp_r2.txt
+hive -e "SELECT COUNT(*) FROM users_info_excp WHERE rule_failed = 'R3'" > users_info_excp_r3.txt
+hive -e "SELECT COUNT(*) FROM users_info_core" > users_info_core.txt
+
+hive -e "SELECT COUNT(*) FROM products_info_excp WHERE rule_failed = 'R1'" > products_info_excp_r1.txt
+hive -e "SELECT COUNT(*) FROM products_info_excp WHERE rule_failed = 'R2'" > products_info_excp_r2.txt
+hive -e "SELECT COUNT(*) FROM products_info_excp WHERE rule_failed = 'R3'" > products_info_excp_r3.txt
+hive -e "SELECT COUNT(*) FROM products_info_core" > products_info_core.txt
+
+
+python
+
+user_activity_excp_r1_cnt = float(file('user_activity_excp_r1.txt','r').read()[0])
+user_activity_excp_r2_cnt = float(file('user_activity_excp_r2.txt','r').read()[0])
+user_activity_excp_r3_cnt = float(file('user_activity_excp_r3.txt','r').read()[0])
+user_activity_core_cnt = float(file('user_activity_core.txt','r').read()[0])
+
+users_info_excp_r1_cnt = float(file('users_info_excp_r1.txt','r').read()[0])
+users_info_excp_r2_cnt = float(file('users_info_excp_r2.txt','r').read()[0])
+users_info_excp_r3_cnt = float(file('users_info_excp_r3.txt','r').read()[0])
+users_info_core_cnt = float(file('users_info_core.txt','r').read()[0])
+
+products_info_excp_r1_cnt = float(file('user_activity_excp_r1.txt','r').read()[0])
+products_info_excp_r2_cnt = float(file('user_activity_excp_r2.txt','r').read()[0])
+products_info_excp_r3_cnt = float(file('user_activity_excp_r3.txt','r').read()[0])
+products_info_core_cnt = float(file('products_info_core.txt','r').read()[0])
+
+threshold = file('rules_threshold.txt','r').read().strip().split(',')
+r1_threshold, r2_threshold, r3_threshold = float(threshold[0])/100, float(threshold[1])/100, float(threshold[2])/100
+
+usr_activity_cnt = user_activity_excp_r1_cnt + user_activity_excp_r2_cnt + user_activity_excp_r3_cnt + user_activity_core_cnt
+users_info_cnt = users_info_excp_r1_cnt + users_info_excp_r2_cnt + users_info_excp_r3_cnt + users_info_core_cnt
+products_info_cnt = products_info_excp_r1_cnt + products_info_excp_r2_cnt + products_info_excp_r3_cnt + products_info_core_cnt
+
+if (user_activity_excp_r1_cnt/usr_activity_cnt > r1_threshold or user_activity_excp_r2_cnt/usr_activity_cnt > r2_threshold or user_activity_excp_r3_cnt/usr_activity_cnt > r3_threshold):
+	print("User activity records are invalid")
+elif (users_info_excp_r1_cnt/users_info_cnt > r1_threshold or users_info_excp_r2_cnt/users_info_cnt > r2_threshold or users_info_excp_r3_cnt/users_info_cnt > r3_threshold):
+	print("User info records are invalid")
+elif (products_info_excp_r1_cnt/products_info_core_cnt > r1_threshold or products_info_excp_r2_cnt/products_info_core_cnt > r2_threshold or products_info_excp_r3_cnt/products_info_core_cnt > r3_threshold):
+	print("Products info records are invalid")

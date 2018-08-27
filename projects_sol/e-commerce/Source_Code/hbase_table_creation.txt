@@ -1,0 +1,32 @@
+start-hbase.sh
+----------------------------------------------------------
+create 'production_category', 'prod_details' | hbase shell
+create 'user_location', 'user_details' | hbase shell
+
+----------------------------------------------------------
+CREATE TABLE prod_details_stg (
+id STRING,
+prod_id STRING,
+category STRING
+)
+ROW FORMAT DELIMITED FILEDS TERMINATED BY ',';
+
+CREATE TABLE user_location_stg (
+id STRING,
+user_id STRING,
+city STRING,
+state STRING
+)
+ROW FORMAT DELIMITED FILEDS TERMINATED BY ',';
+
+LOAD DATA LOCAL INPATH '/home/acadgild/hive/data/hbase_data/prod_details.txt'
+INTO TABLE prod_details_stg;
+
+LOAD DATA LOCAL INPATH '/home/acadgild/hive/data/hbase_data/user_location.txt'
+INTO TABLE user_location_stg;
+
+INSERT OVERWRITE TABLE prod_details
+SELECT * FROM prod_details_stg;
+
+INSERT OVERWRITE TABLE user_location
+SELECT * FROM user_location_stg;

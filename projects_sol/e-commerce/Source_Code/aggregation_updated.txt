@@ -1,0 +1,377 @@
+QUESTION 1:
+=================================================
+
+create table usr_category_agr_wrk
+(
+user_id string,
+category string,
+frequency bigint
+)
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+STORED AS ORC;
+
+INSERT OVERWRITE TABLE usr_category_agr_wrk
+PARTITION (rptg_dt)
+
+select u.user_id as user_id,p.category as category,count(*) as cnt,
+from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd')
+FROM user_activity_core u
+LEFT OUTER JOIN products_info_core p ON
+(u.product_id=p.product_id)
+group by u.user_id,p.category
+
+
+create table usr_category_agr
+(
+user_id string,
+most_purchased_category string
+)
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+STORED AS ORC;
+
+INSERT OVERWRITE TABLE usr_category_agr
+PARTITION (rptg_dt)
+SELECT user_id,category,rptg_dt FROM (
+SELECT user_id,category,rptg_dt,rank() over ( partition by user_id order by frequency desc) as rank
+FROM usr_category_agr_wrk) a
+WHERE a.rank=1
+GROUP BY user_id,category,rptg_dt;
+========================================================
+
+QUESTION 2:
+========================================================
+create table prod_profit_agr_wrk
+(
+product_id string,
+count bigint
+)
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+STORED AS ORC;
+
+INSERT OVERWRITE TABLE prod_profit_agr_wrk
+PARTITION (rptg_dt)
+SELECT u.product_id,
+count(*),
+u.rptg_dt
+FROM user_activity_core u
+LEFT OUTER JOIN products_info_core p 
+ON u.product_id=p.product_id
+where u.cancellation='false' and u.return='False'
+group by 
+u.product_id,u.rptg_dt;
+
+create table prod_profit_agr
+(
+product_id string,
+count bigint,
+net_profit bigint
+)
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+STORED AS ORC;
+
+
+INSERT OVERWRITE TABLE prod_profit_agr
+PARTITION (rptg_dt)
+SELECT u.product_id,
+count,
+count * (cast((price-cast(discount as bigint)) as bigint)* cast(profit_percent as bigint)/100) as net_profit,
+u.rptg_dt
+FROM prod_profit_agr_wrk u
+LEFT OUTER JOIN products_info_core p 
+ON u.product_id=p.product_id
+group by u.product_id,count,
+count * (cast((price-cast(discount as bigint)) as bigint)* cast(profit_percent as bigint)/100),
+u.rptg_dt;
+
+create table prod_profit_aggr
+(
+product_id string,
+most_profit_product string,
+reseller string
+)
+PARTITIONED BY
+(
+rptg_Dt STRING
+)
+STORED AS ORC;
+
+INSERT OVERWRITE TABLE prod_profit_aggr
+PARTITION (rptg_dt)
+SELECT product_id,most_profit_product,reseller,rptg_dt FROM (
+SELECT p.product_id,p.net_profit as most_profit_product,pi.reseller as reseller,p.rptg_dt,rank() over (order by net_profit desc) as rank
+FROM prod_profit_agr p
+LEFT OUTER JOIN products_info_core pi ON p.product_id=pi.product_id) a
+WHERE a.rank=1
+GROUP BY product_id,most_profit_product,rptg_dt;
+
+
+====================================================================================
+QUESTION 4
+===========================================================================
+
+create table ocupation_category_aggr_wrk
+(
+user_id string,
+occupation string,
+category string,
+count bigint
+)
+partitioned by
+(
+rptg_dt string)
+stored as ORC;
+
+
+INSERT OVERWRITE TABLE ocupation_category_aggr_wrk
+partition (rptg_dt)
+select ua.user_id,u.occupation,p.category, count(*),ua.rptg_dt from 
+user_activity_core ua
+LEFT OUTER JOIN users_info_core u
+ON u.user_id=ua.user_id
+LEFT OUTER JOIN products_info_core p
+ON ua.product_id=p.product_id
+group by u.occupation,p.category,ua.rptg_dt;
+
+create table ocupation_category_aggr
+(
+user_id string,
+occupation string,
+category string
+)
+partitioned by
+(
+rptg_dt string)
+stored as ORC;
+
+
+
+INSERT OVERWRITE TABLE ocupation_category_aggr
+partition (rptg_dt)
+select user_id,occupation,category,rptg_dt from 
+(select user_id,occupation,category,rptg_dt, rank() over (partition by occupation order by count desc) as rank
+from ocupation_category_aggr_wrk )a
+where a.rank=1;
+
+
+====================================================================================
+QUESTION 5
+===========================================================================
+fraud_detection
+
+create table fraud_detection_work1
+(
+user_id string,
+return bigint
+--valid_purchase bigint
+)
+partitioned by
+(
+rptg_dt string)
+stored as ORC;
+
+create table fraud_detection_work2
+(
+user_id string,
+--return bigint
+valid_purchase bigint
+)
+partitioned by
+(
+rptg_dt string)
+stored as ORC;
+
+create table fraud_detection
+(
+user_id string,
+return bigint,
+valid_purchase bigint
+)
+partitioned by
+(
+rptg_dt string)
+stored as ORC;
+
+INSERT OVERWRITE TABLE fraud_detection_work1
+PARTITION (rptg_dt)
+
+select user_id,count(*),rptg_dt from
+user_activity_core u
+where return='True'
+group by user_id,rptg_dt;
+
+INSERT OVERWRITE TABLE fraud_detection_work2
+PARTITION(rptg_dt)
+
+select user_id,count(*),rptg_dt from
+user_activity_core u
+where return='False'
+group by user_id,rptg_dt;
+
+INSERT OVERWRITE TABLE fraud_detection
+PARTITION (rptg_dt)
+select user_id,return,valid_purchase,rptg_dt from (
+select w1.user_id as user_id,w1.return as return,w2.valid_purchase as valid_purchase,w1.rptg_dt as rptg_dt,rank () over( order by w1.return desc) as rank
+from fraud_detection_work1 w1
+left outer join fraud_detection_work2 w2
+ON w1.user_id=w2.user_id
+)a
+where a.rank=1;
+
+=========================================================================
+QUESTION 6/7
+=========================================================================
+create table return_cancel_work
+(
+location struct<city:string,state:string>,
+count bigint
+)
+PARTITIONED BY
+(
+rptg_dt string
+)
+STORED AS ORC;
+
+
+
+create table return_aggr
+(
+location struct<city:string,state:string>,
+count bigint
+)
+PARTITIONED BY
+(
+rptg_dt string
+)
+STORED AS ORC;
+
+
+INSERT OVERWRITE TABLE return_cancel_work
+PARTITION (rptg_dt)
+select
+CASE WHEN u.location IS NULL THEN named_struct('city','NA','state','NA')
+ELSE u.location END AS location,
+count(*),
+CASE WHEN u.rptg_dt IS NULL THEN 'NA'
+ELSE u.rptg_dt END AS rptg_dt from 
+user_activity_core ua
+LEFT OUTER JOIN users_info_core u ON
+ua.user_id=u.id
+WHERE 
+ua.return='True'
+group by u.location,u.rptg_dt
+
+INSERT OVERWRITE TABLE return_aggr
+PARTITION (rptg_dt)
+select
+location,count,rptg_dt from 
+(
+select location,count,rptg_dt,rank() over (order by count desc) rank
+FROM return_cancel_work
+)a
+WHERE a.rank=1
+group by location,count,rptg_dt;
+
+
+
+drop table return_cancel_work;
+create table return_cancel_work
+(
+location struct<city:string,state:string>,
+count bigint
+)
+PARTITIONED BY
+(
+rptg_dt string
+)
+STORED AS ORC;
+
+
+
+create table cancel_aggr
+(
+location struct<city:string,state:string>,
+count bigint
+)
+PARTITIONED BY
+(
+rptg_dt string
+)
+STORED AS ORC;
+
+
+INSERT OVERWRITE TABLE return_cancel_work
+PARTITION (rptg_dt)
+select
+CASE WHEN u.location IS NULL THEN named_struct('city','NA','state','NA')
+ELSE u.location END AS location,
+count(*),
+CASE WHEN u.rptg_dt IS NULL THEN 'NA'
+ELSE u.rptg_dt END AS rptg_dt from 
+user_activity_core ua
+LEFT OUTER JOIN users_info_core u ON
+ua.user_id=u.id
+WHERE 
+ua.cancellation='True'
+group by u.location,u.rptg_dt
+
+================================================================================================================
+QUESTION - Final Hive table to generate most purchased category which fraud detectation is return value is true 
+================================================================================================================
+
+create table most_valid_purch_ctgr
+(
+user_id string,
+purchase bigint,
+)
+
+create table most_valid_purch_ctgr
+(
+user_id string,
+category string,
+purchase bigint
+)
+PARTITIONED BY
+(
+month string
+)
+STORED AS ORC;
+
+INSERT OVERWRITE TABLE most_valid_purch_ctgr
+PARTITION (month)
+select 
+u.user_id,
+u.category,
+fr.valid_purchase,
+from_unixtime(unix_timestamp(rptg_dt),'MM-YYYY') as month 
+from 
+ocupation_category_aggr u 
+left outer join 
+fraud_detection fr
+ON (u.user_id = fr.user_id)
+where 
+fr.return='True';
+
+
+=========================================================================================================================
+Sqoop final hive table data to MySQL using multiexport
+=========================================================================================================================
+
+one way to do it by hcatlog. 
+
+sqoop export --connect jdbc:mysql://localhost/test --driver com.mysql.jdbc.Driver --username hive --password hive --table  mysql_table_export --hcatalog-table table_text --input-fields-terminated-by '|' --input-lines-terminated-by '#'
+
+else use the hadoop directory directly with normal export command as below - use /"*" for recursive export of partitions
+
+sqoop export --connect jdbc:mysql://localhost/db --username root --table employee  --export-dir /emp/emp_data/*
