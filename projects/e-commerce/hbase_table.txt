@@ -1,0 +1,2 @@
+create 'production_category', 'prod_details'
+create 'user_location', 'user_details'

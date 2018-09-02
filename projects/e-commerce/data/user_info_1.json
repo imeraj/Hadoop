@@ -1,0 +1,3 @@
+{"id":"U101", "name":"Rakesh", "location":{"city":"MUMBAI","state":"MAHARASHTRA"}, "age":20, "occupation":"STUDENT"}
+{"id":"", "name":"Rakesh", "location":{"city":"MUMBAI","state":"MAHARASHTRA"}, "age":20, "occupation":"STUDENT"}
+{"id":"U103", "name":"Rakesh", "location":{"city":"","state":""}, "age":20, "occupation":"STUDENT"}

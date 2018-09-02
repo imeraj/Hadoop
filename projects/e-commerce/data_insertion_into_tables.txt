@@ -1,0 +1,14 @@
+LOAD DATA LOCAL INPATH '/Users/meraj/Development/Hadoop/projects/e-commerce/data/product_info_merge.json'
+INTO TABLE products_info_raw;
+
+LOAD DATA LOCAL INPATH '/Users/meraj/Development/Hadoop/projects/e-commerce/data/user_info_1.json'
+INTO TABLE users_info_raw;
+
+LOAD DATA LOCAL INPATH '/Users/meraj/Development/Hadoop/projects/e-commerce/data/user_activity_1.json'
+INTO TABLE user_activity_raw;
+
+INSERT OVERWRITE TABLE products_info_stg PARTITION (rptg_dt) SELECT id, name, reseller, category, price, discount, profit_percent, from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd') as rptg_dt FROM products_info_raw;
+
+INSERT OVERWRITE TABLE users_info_stg PARTITION (rptg_dt) SELECT id,name, location, age, category, from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd') as rptg_dt FROM users_info_raw;
+
+INSERT OVERWRITE TABLE user_activity_stg PARTITION (rptg_dt) SELECT product_id, user_id, cancellation, return, cancellation_reason, return_reason, order_date, shipment_date, delivery_date, cancellation_date, return_date, from_unixtime(cast(unix_timestamp() as bigint),'yyyy-MM-dd') as rptg_dt FROM user_activity_raw;

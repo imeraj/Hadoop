@@ -1,4 +1,4 @@
-ADD JAR /Users/meraj/Development/Hadoop/projects/bank/hive_udf/hive-udf.jar;CREATE TEMPORARY FUNCTION encrypt AS 'encryption.AESencrypt';
+ADD JAR /Users/meraj/Development/Hadoop/projects/bank/hive_udf/hive-udf.jar;
 CREATE TEMPORARY FUNCTION encrypt AS 'encryption.AESencrypt';
 CREATE TEMPORARY FUNCTION decrypt AS 'encryption.AESdecrypt';
 CREATE TEMPORARY FUNCTION max_profit AS 'maxprofit.MaxProfit';
