@@ -87,8 +87,8 @@ shipment_date string,
 delivery_date string,
 cancellation_date string,
 return_date string
-);
-
+)
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe';
 
 CREATE TABLE user_activity_stg
 (
@@ -170,7 +170,8 @@ name string,
 location struct<city:string,state:string>,
 age bigint,
 category string
-);
+)
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe';
 
 CREATE TABLE users_info_stg(
 user_id string,
