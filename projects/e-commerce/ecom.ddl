@@ -223,4 +223,34 @@ user_id)
 INTO 8 BUCKETS
 STORED AS ORC;
 
+CREATE EXTERNAL TABLE prod_details(
+id string COMMENT 'from deserializer', prod_id string COMMENT 'from deserializer', category string COMMENT 'from deserializer')
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe' 
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES ( 'hbase.columns.mapping'=':key,prod_details:id,prod_details:category', 'serialization.format'='1')
+TBLPROPERTIES ( 'hbase.table.name'='production_category'
+);
 
+CREATE TABLE prod_details_stg ( 
+id STRING,
+prod_id STRING,
+category STRING
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+
+CREATE EXTERNAL TABLE user_location( id string, user_id string, city string, state string ) 
+ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler' 
+WITH SERDEPROPERTIES ( 'hbase.columns.mapping'=':key,
+user_details:id,
+user_details:city,
+user_details:state',
+'serialization.format'='1'
+) TBLPROPERTIES ( 'hbase.table.name'='user_location' );
+
+CREATE TABLE user_location_stg ( id STRING,
+user_id STRING,
+city STRING,
+state STRING
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
